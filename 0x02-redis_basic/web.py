@@ -3,34 +3,48 @@
 Caching request module
 """
 import redis
-import requests
-from functools import wraps
-from typing import Callable
+import uuid
+from typing import Union, Callable, Optional
 
 
-def track_get_page(fn: Callable) -> Callable:
+class Cache:
+    def __init__(self, host='localhost', port=6379, db=0):
     """ Decorator for get_page
     """
-    @wraps(fn)
-    def wrapper(url: str) -> str:
-        """ Wrapper that:
-            - check whether a url's data is cached
-            - tracks how many times get_page is called
-        """
-        client = redis.Redis()
-        client.incr(f'count:{url}')
-        cached_page = client.get(f'{url}')
-        if cached_page:
-            return cached_page.decode('utf-8')
-        response = fn(url)
-        client.set(f'{url}', response, 10)
-        return response
-    return wrapper
+    self._redis = redis.Redis(host=host, port=port, db=db)
+    self._redis.flushdb()
 
-
-@track_get_page
-def get_page(url: str) -> str:
-    """ Makes a http request to a given endpoint
+    def store(self, data: Union[str, bytes, int, float]) -> str:
     """
-    response = requests.get(url)
-    return response.text
+    """
+    key = str(uuid.uuid4())
+    self._redis.set(kry, data)
+    return key
+
+    def get(self, key: str,
+            fn: Optional[Callable] = None) -> Union[str, bytes, int, float]:
+            """
+            """
+            data = self._redis.get(key)
+            if data is None:
+                return data
+            if fn:
+                callable_fn - fn(data)
+                return callable_fn
+            else:
+                return data
+        def get_str(self, key: str) -> str:
+            """
+            """
+            value = self._redis.get(key. fn=lambda d: d.decode()"utf-8"))
+            return value
+        def get_int(self, key: str) -> int:
+            """
+            """
+            value = self._redis.get(key)
+            try:
+                value = int(value.decode("utf-8"))
+            except Exception:
+                return None
+
+            return value
